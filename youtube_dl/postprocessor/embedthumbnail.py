@@ -75,6 +75,16 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
             thumbnail_filename = thumbnail_jpg_filename
 
         if info['ext'] == 'mp3':
+            # Crop thumbnail to 1:1 aspect
+            escaped_thumbnail_filename = thumbnail_filename.replace('%', '#')
+            os.rename(encodeFilename(thumbnail_filename), encodeFilename(escaped_thumbnail_filename))
+            escaped_thumbnail_jpg_filename = replace_extension(escaped_thumbnail_filename, 'jpg')
+            self._downloader.to_screen('[ffmpeg] Crop thumbnail "%s" to square' % escaped_thumbnail_filename)
+            self.run_ffmpeg(escaped_thumbnail_filename, escaped_thumbnail_jpg_filename, ['-vf', 'crop=min(iw\,ih):min(iw\,ih)'])
+            thumbnail_jpg_filename = replace_extension(thumbnail_filename, 'jpg')
+            os.rename(encodeFilename(escaped_thumbnail_jpg_filename), encodeFilename(thumbnail_jpg_filename))
+            thumbnail_filename = thumbnail_jpg_filename
+
             options = [
                 '-c', 'copy', '-map', '0', '-map', '1',
                 '-metadata:s:v', 'title="Album cover"', '-metadata:s:v', 'comment="Cover (Front)"']
